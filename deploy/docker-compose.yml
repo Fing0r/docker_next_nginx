@@ -1,0 +1,39 @@
+name: next-app
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: ${NGINX_CONTAINER_NAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./nginx/template.nginx.conf:/etc/nginx/template.nginx.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ./nginx/entrypoint.sh:/nginx-entrypoint.sh:ro
+    restart: always
+    entrypoint: ["/nginx-entrypoint.sh"]
+
+    extra_hosts:
+      - "${SERVICE_HOST_NAME}:host-gateway"
+    networks:
+      - next-app-networks
+
+  next-web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    container_name: ${NEXT_CONTAINER_NAME}
+    restart: always
+    extra_hosts:
+      - "${SERVICE_HOST_NAME}:host-gateway"
+    networks:
+      - next-app-networks
+
+networks:
+  next-app-networks:
+    name: next-app-networks
+    driver: bridge
